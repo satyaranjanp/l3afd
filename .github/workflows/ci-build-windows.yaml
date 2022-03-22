@@ -21,10 +21,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       
-      - name: Build
+      - name: vet
         run: |
-          go build -tags WINDOWS .
+          go vet ./...
       
       - name: Test
         run: |
           go test -tags WINDOWS ./...
+
+      - name: Build
+        run: |
+          go build -tags WINDOWS .
