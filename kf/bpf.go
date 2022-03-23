@@ -476,7 +476,7 @@ func (b *BPF) isRunning() (bool, error) {
 		return false, errors.New("No process id found")
 	}
 
-    return IsProcessRunning(b.Cmd.Process.Pid, b.Program.Name)
+	return IsProcessRunning(b.Cmd.Process.Pid, b.Program.Name)
 }
 
 // Check binary already exists
