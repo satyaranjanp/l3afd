@@ -27,8 +27,7 @@ jobs:
       
       - name: Format
         run: |
-          go version
-          $res = (gofmt -s -l .)
+          $res = (gofmt -s -l .) -replace "$_"
           if ($res -ne "") {
             echo $res
             exit 1
@@ -36,7 +35,7 @@ jobs:
           
       - name: Vet
         run: |
-          go vet ./...
+          go vet -tags WINDOWS ./...
       
       - name: Test
         run: |
