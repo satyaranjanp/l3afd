@@ -18,6 +18,10 @@ jobs:
     runs-on: windows-latest
     
     steps:
+      - name: Config
+        run: |
+          git config --global core.autocrlf false
+          
       - name: Checkout repository
         uses: actions/checkout@v2
       
