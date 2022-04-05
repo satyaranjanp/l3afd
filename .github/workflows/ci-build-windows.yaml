@@ -25,9 +25,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       
-      - name: Format
+      - name: Formatting
         run: |
-          $res = (gofmt -s -l .) -replace "$_"
+          go install golang.org/x/tools/cmd/goimports@latest      
+          $res = (goimports -l .) -replace "$_"
           if ($res -ne "") {
             echo $res
             exit 1
@@ -43,6 +44,12 @@ jobs:
           install-go: false
           build-tags: WINDOWS
       
+      - uses: dominikh/staticcheck-action@v1.1.0
+        with:
+          version: "2021.1.2"
+          install-go: false
+          build-tags: WINDOWS
+
       - name: Test
         run: |
           go test -tags WINDOWS ./...
