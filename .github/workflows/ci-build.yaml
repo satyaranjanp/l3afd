@@ -20,11 +20,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Format
+      - name: Formatting
         run: |
-          res="$(gofmt -s -l .)"
+          go install golang.org/x/tools/cmd/goimports@latest      
+          res="$(goimports -l .)"
           if [ "$(echo "$res" | tr -d '\n' | wc -l)" -gt 0 ]; then
-          echo "Unformatted source code:"
           echo "$res"
           exit 1
           fi

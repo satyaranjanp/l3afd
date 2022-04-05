@@ -25,9 +25,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       
-      - name: Format
+      - name: Formatting
         run: |
-          $res = (gofmt -s -l .) -replace "$_"
+          go install golang.org/x/tools/cmd/goimports@latest      
+          $res = (goimports -l .) -replace "$_"
           if ($res -ne "") {
             echo $res
             exit 1
