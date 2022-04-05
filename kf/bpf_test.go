@@ -82,8 +82,8 @@ func TestNewBpfProgram(t *testing.T) {
 				Cmd:            nil,
 				FilePath:       "",
 				LogDir:         "",
-				BpfMaps:        make(map[string]BPFMap, 0),
-				MetricsBpfMaps: make(map[string]*MetricsBPFMap, 0),
+				BpfMaps:        make(map[string]BPFMap),
+				MetricsBpfMaps: make(map[string]*MetricsBPFMap),
 				Ctx:            nil,
 				Done:           nil,
 				DataCenter:     "localdc",
@@ -98,8 +98,8 @@ func TestNewBpfProgram(t *testing.T) {
 				Program:        models.BPFProgram{},
 				Cmd:            nil,
 				FilePath:       "",
-				BpfMaps:        make(map[string]BPFMap, 0),
-				MetricsBpfMaps: make(map[string]*MetricsBPFMap, 0),
+				BpfMaps:        make(map[string]BPFMap),
+				MetricsBpfMaps: make(map[string]*MetricsBPFMap),
 			},
 		},
 	}
@@ -119,8 +119,8 @@ func TestBPF_Stop(t *testing.T) {
 		FilePath     string
 		RestartCount int
 		Direction    string
-		ctx          context.Context
-		datacenter   string
+		//		ctx          context.Context
+		//		datacenter   string
 	}
 	tests := []struct {
 		name    string
@@ -200,7 +200,7 @@ func TestBPF_Start(t *testing.T) {
 		FilePath     string
 		RestartCount int
 		ifaceName    string
-		seqID        int
+		//		seqID        int
 	}
 	tests := []struct {
 		name    string
