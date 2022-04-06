@@ -67,7 +67,7 @@ func NewBpfProgram(ctx context.Context, program models.BPFProgram, logDir, dataC
 		Cmd:            nil,
 		FilePath:       "",
 		LogDir:         logDir,
-		BpfMaps:        make(map[string]BPFMap),
+		BpfMaps:        make(map[string]BPFMap, 0),
 		MetricsBpfMaps: make(map[string]*MetricsBPFMap),
 		Ctx:            ctx,
 		Done:           nil,
