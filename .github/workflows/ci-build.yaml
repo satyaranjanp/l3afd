@@ -20,6 +20,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - uses: codecov/codecov-action@v2
+        with:
+          verbose: true
+    
       - name: Format
         run: |
           res="$(gofmt -s -l .)"
