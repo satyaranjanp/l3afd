@@ -18,7 +18,7 @@ type Config struct {
 	BPFLogDir         string
 	MinKernelMajorVer int
 	MinKernelMinorVer int
-	ProximityUrl      string
+	KFRepoURL         string
 	HttpClientTimeout time.Duration
 	MaxNFReStartCount int
 	MaxNFsAttachCount int
@@ -83,7 +83,7 @@ func ReadConfig(configPath string) (*Config, error) {
 		BPFLogDir:                   LoadConfigString(confReader, "l3afd", "bpf-log-dir"),
 		MinKernelMajorVer:           LoadConfigInt(confReader, "l3afd", "kernel-major-version"),
 		MinKernelMinorVer:           LoadConfigInt(confReader, "l3afd", "kernel-minor-version"),
-		ProximityUrl:                LoadConfigString(confReader, "proximity", "url"),
+		KFRepoURL:                   LoadConfigString(confReader, "kf-repo", "url"),
 		HttpClientTimeout:           LoadConfigDuration(confReader, "l3afd", "http-client-timeout"),
 		MaxNFReStartCount:           LoadConfigInt(confReader, "l3afd", "max-nf-restart-count"),
 		MaxNFsAttachCount:           LoadConfigInt(confReader, "l3afd", "max-nfs-attach-count"),
@@ -113,6 +113,6 @@ func ReadConfig(configPath string) (*Config, error) {
 		EBPFChainDebugAddr:          LoadOptionalConfigString(confReader, "ebpf-chain-debug", "addr", "0.0.0.0:8899"),
 		EBPFChainDebugEnabled:       LoadOptionalConfigBool(confReader, "ebpf-chain-debug", "enabled", false),
 		L3afConfigsgRPCAddr:         LoadOptionalConfigString(confReader, "l3af-configs", "rpc-addr", "localhost:58898"),
-		L3afConfigsRestAPIAddr:      LoadOptionalConfigString(confReader, "l3af-configs", "restapi-addr", "localhost:3000"),
+		L3afConfigsRestAPIAddr:      LoadOptionalConfigString(confReader, "l3af-configs", "restapi-addr", "localhost:53000"),
 	}, nil
 }

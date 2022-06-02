@@ -1,0 +1,42 @@
+name: CI Ubuntu build
+on:
+  pull_request: {}
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: golang:1.16.10-alpine3.14
+    
+    steps:
+      - name: Set up environment
+        run : |
+          apk update
+          apk add gcc libc-dev
+          
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Format
+        run: |
+          res="$(gofmt -s -l .)"
+          if [ "$(echo "$res" | tr -d '\n' | wc -l)" -gt 0 ]; then
+          echo "Unformatted source code:"
+          echo "$res"
+          exit 1
+          fi
+ 
+      - name: Vet
+        run: |
+          go vet ./...
+
+      - name: Test
+        run: |
+          go test ./...      
+
+      - name: Build
+        run: |
+          go build .
