@@ -9,18 +9,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"reflect"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/l3af-project/l3afd/config"
 	"github.com/l3af-project/l3afd/models"
 
 	"github.com/rs/zerolog/log"
-	"github.com/safchain/ethtool"
 )
 
 type NFConfigs struct {
@@ -173,53 +170,60 @@ func (c *NFConfigs) Get(key string) ([]*models.L3afDNFConfigDetail, bool) {
 	return bpfList, true
 }
 
-// This method to stop all the network functions and delete elements in the list
+// Close stop all the network functions and delete elements in the list
 func (c *NFConfigs) Close(ctx context.Context) error {
 	ticker := time.NewTicker(shutdownInterval)
 	defer ticker.Stop()
-	for {
-		var wg sync.WaitGroup
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for ifaceName, _ := range c.IngressXDPBpfs {
-				if err := c.StopNRemoveAllBPFPrograms(ifaceName, models.XDPIngressType); err != nil {
-					log.Warn().Err(err).Msg("failed to Close Ingress XDP BPF Program")
-				}
-				delete(c.IngressXDPBpfs, ifaceName)
-			}
-		}()
+	doneCh := make(chan struct{})
+	var wg sync.WaitGroup
 
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for ifaceName, _ := range c.IngressTCBpfs {
-				if err := c.StopNRemoveAllBPFPrograms(ifaceName, models.IngressType); err != nil {
-					log.Warn().Err(err).Msg("failed to Close Ingress TC BPF Program")
-				}
-				delete(c.IngressTCBpfs, ifaceName)
-			}
-		}()
-
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for ifaceName, _ := range c.EgressTCBpfs {
-				if err := c.StopNRemoveAllBPFPrograms(ifaceName, models.EgressType); err != nil {
-					log.Warn().Err(err).Msg("failed to Close Egress TC BPF Program")
-				}
-				delete(c.EgressTCBpfs, ifaceName)
-			}
-		}()
-
-		// Wait for all NF's to stop.
+	// wait for waitGroup to shut down
+	go func() {
 		wg.Wait()
+		close(doneCh)
+	}()
 
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-ticker.C:
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for ifaceName := range c.IngressXDPBpfs {
+			if err := c.StopNRemoveAllBPFPrograms(ifaceName, models.XDPIngressType); err != nil {
+				log.Warn().Err(err).Msg("failed to Close Ingress XDP BPF Program")
+			}
+			delete(c.IngressXDPBpfs, ifaceName)
 		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for ifaceName := range c.IngressTCBpfs {
+			if err := c.StopNRemoveAllBPFPrograms(ifaceName, models.IngressType); err != nil {
+				log.Warn().Err(err).Msg("failed to Close Ingress TC BPF Program")
+			}
+			delete(c.IngressTCBpfs, ifaceName)
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for ifaceName := range c.EgressTCBpfs {
+			if err := c.StopNRemoveAllBPFPrograms(ifaceName, models.EgressType); err != nil {
+				log.Warn().Err(err).Msg("failed to Close Egress TC BPF Program")
+			}
+			delete(c.EgressTCBpfs, ifaceName)
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-ticker.C:
+		// didn't close successfully
+		return fmt.Errorf("nfconfig close didn't got processed in shutdownInterval ms %v", shutdownInterval)
+	case <-doneCh:
+		// we deleted successfully
 	}
 
 	return nil
@@ -685,27 +689,6 @@ func (c *NFConfigs) StopRootProgram(ifaceName, direction string) error {
 	return nil
 }
 
-// VerifyNMountBPFFS - Mounting bpf filesystem
-func VerifyNMountBPFFS() error {
-	dstPath := "/sys/fs/bpf"
-	srcPath := "bpffs"
-	fstype := "bpf"
-	flags := 0
-
-	mnts, err := ioutil.ReadFile("/proc/mounts")
-	if err != nil {
-		return fmt.Errorf("failed to read procfs: %v", err)
-	}
-
-	if strings.Contains(string(mnts), dstPath) == false {
-		log.Warn().Msg("bpf filesystem is not mounted going to mount")
-		if err = syscall.Mount(srcPath, dstPath, fstype, uintptr(flags), ""); err != nil {
-			return fmt.Errorf("unable to mount %s at %s: %s", srcPath, dstPath, err)
-		}
-	}
-	return nil
-}
-
 // Link BPF programs
 func (c *NFConfigs) LinkBPFPrograms(leftBPF, rightBPF *BPF) error {
 	log.Info().Msgf("LinkBPFPrograms : left BPF Prog %s right BPF Prog %s", leftBPF.Program.Name, rightBPF.Program.Name)
@@ -827,7 +810,7 @@ func (c *NFConfigs) RemoveMissingNetIfacesNBPFProgsInConfigs(cfgbpfProgs map[str
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		for ifaceName, _ := range c.IngressXDPBpfs {
+		for ifaceName := range c.IngressXDPBpfs {
 			if err := c.RemoveMissingBPFProgramsInConfigs(cfgbpfProgs, ifaceName, models.XDPIngressType); err != nil {
 				log.Error().Err(err).Msgf("Failed to stop missing program for network interface %s direction XDPIngress", ifaceName)
 			}
@@ -855,29 +838,5 @@ func (c *NFConfigs) RemoveMissingNetIfacesNBPFProgsInConfigs(cfgbpfProgs map[str
 	}()
 
 	wg.Wait()
-	return nil
-}
-
-// DisableLRO - XDP programs are failing when LRO is enabled, to fix this we use to manually disable.
-// # ethtool -K ens7 lro off
-// # ethtool -k ens7 | grep large-receive-offload
-// large-receive-offload: off
-func DisableLRO(ifaceName string) error {
-	ethHandle, err := ethtool.NewEthtool()
-	if err != nil {
-		err = fmt.Errorf("ethtool failed to get the handle %w", err)
-		log.Error().Err(err).Msg("")
-		return err
-	}
-	defer ethHandle.Close()
-
-	config := make(map[string]bool, 1)
-	config["rx-lro"] = false
-	if err := ethHandle.Change(ifaceName, config); err != nil {
-		err = fmt.Errorf("ethtool failed to disable LRO on %s with err %w", ifaceName, err)
-		log.Error().Err(err).Msg("")
-		return err
-	}
-
 	return nil
 }
