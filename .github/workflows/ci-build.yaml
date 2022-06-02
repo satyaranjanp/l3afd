@@ -9,13 +9,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: golang:1.16.10-alpine3.14
+            image: ubuntu:focal 
     
     steps:
       - name: Set up environment
         run : |
-          apk update
-          apk add gcc libc-dev
+          apt update
+          apt add gcc libc-dev golang-1.17
           
       - name: Checkout repository
         uses: actions/checkout@v2

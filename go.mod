@@ -1,6 +1,6 @@
 module github.com/l3af-project/l3afd
 
-go 1.16
+go 1.17
 
 require (
 	github.com/cilium/ebpf v0.6.2
